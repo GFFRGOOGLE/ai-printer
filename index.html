@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<title>Photo Studio</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface-2:#fafafa;--text:#18181b;--muted:#71717a;
+  --border:#e4e4e7;--border-strong:#d4d4d8;--accent:#2563eb;--btn:#18181b;
+  --btn-text:#fafafa;--danger:#dc2626;--overlay:rgba(0,0,0,.55);
+  --radius:8px;--radius-sm:6px;
+}
+[data-theme="dark"]{
+  --bg:#09090b;--surface:#18181b;--surface-2:#1f1f23;--text:#fafafa;--muted:#a1a1aa;
+  --border:#27272a;--border-strong:#3f3f46;--accent:#3b82f6;--btn:#fafafa;
+  --btn-text:#18181b;--overlay:rgba(0,0,0,.7);
+}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;padding:16px;
+}
+.app{max-width:1100px;margin:0 auto}
+
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:0 4px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:32px;height:32px;border-radius:var(--radius-sm);background:var(--btn);
+  color:var(--btn-text);display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13px;letter-spacing:-.5px}
+.brand-name{font-weight:600;font-size:15px}
+.brand-sub{font-size:11px;color:var(--muted)}
+.icon-btn{width:34px;height:34px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:var(--surface);color:var(--text);cursor:pointer;display:flex;
+  align-items:center;justify-content:center;transition:background .15s}
+.icon-btn:hover{background:var(--surface-2)}
+.icon-btn svg{width:16px;height:16px}
+
+.panel{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px}
+.panel-title{font-size:12px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+
+.tabs{display:flex;border-bottom:1px solid var(--border);margin:-14px -14px 14px}
+.tab{flex:1;padding:11px;background:transparent;border:0;color:var(--muted);
+  cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--text);border-bottom-color:var(--btn)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+.field{display:flex;gap:8px;flex-direction:column}
+@media(min-width:520px){.field.row{flex-direction:row}}
+input[type=text],textarea{
+  width:100%;padding:9px 12px;font-size:13px;font-family:inherit;
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);outline:none;transition:border-color .15s}
+input[type=text]:focus,textarea:focus{border-color:var(--accent);background:var(--surface)}
+input[type=file]{width:100%;padding:8px;font-size:12px;font-family:inherit;
+  background:var(--surface-2);border:1px dashed var(--border-strong);
+  border-radius:var(--radius-sm);color:var(--muted);cursor:pointer}
+input[type=file]::file-selector-button{padding:6px 12px;font-size:12px;font-family:inherit;
+  font-weight:500;background:var(--surface);border:1px solid var(--border);
+  border-radius:4px;color:var(--text);cursor:pointer;margin-right:8px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 14px;font-size:13px;font-weight:500;font-family:inherit;
+  border:1px solid transparent;border-radius:var(--radius-sm);
+  background:var(--btn);color:var(--btn-text);cursor:pointer;
+  transition:background .15s,opacity .15s;white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.btn:hover:not(:disabled){opacity:.85}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.secondary{background:var(--surface);color:var(--text);border-color:var(--border)}
+.btn.secondary:hover:not(:disabled){background:var(--surface-2);border-color:var(--border-strong)}
+.btn svg{width:14px;height:14px;flex-shrink:0}
+.btn.small{padding:7px 10px;font-size:12px}
+
+.canvas-wrap{background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;display:flex;
+  align-items:center;justify-content:center;min-height:280px;
+  position:relative;overflow:hidden;touch-action:none}
+.canvas-holder{position:relative;display:block;line-height:0;max-width:100%;touch-action:none}
+#canvas{display:block;max-width:100%;max-height:65vh;height:auto;width:auto;
+  background:#fff;touch-action:none;user-select:none;-webkit-user-select:none;
+  -webkit-touch-callout:none}
+.placeholder{color:var(--muted);font-size:13px;text-align:center;padding:40px 20px}
+.placeholder strong{display:block;color:var(--text);font-size:15px;margin-bottom:6px;font-weight:600}
+
+/* CROP */
+.crop-overlay{position:absolute;inset:0;display:none;overflow:hidden;
+  pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none}
+.crop-overlay.active{display:block}
+.crop-rect{position:absolute;border:1.5px solid rgba(255,255,255,.95);
+  box-shadow:0 0 0 9999px var(--overlay),0 0 0 1px rgba(0,0,0,.35) inset;
+  cursor:move;pointer-events:auto;touch-action:none}
+.crop-rect .grid{position:absolute;inset:0;pointer-events:none;background-image:
+  linear-gradient(to right,transparent 33.33%,rgba(255,255,255,.4) 33.33%,rgba(255,255,255,.4) calc(33.33% + 1px),transparent calc(33.33% + 1px)),
+  linear-gradient(to right,transparent 66.66%,rgba(255,255,255,.4) 66.66%,rgba(255,255,255,.4) calc(66.66% + 1px),transparent calc(66.66% + 1px)),
+  linear-gradient(to bottom,transparent 33.33%,rgba(255,255,255,.4) 33.33%,rgba(255,255,255,.4) calc(33.33% + 1px),transparent calc(33.33% + 1px)),
+  linear-gradient(to bottom,transparent 66.66%,rgba(255,255,255,.4) 66.66%,rgba(255,255,255,.4) calc(66.66% + 1px),transparent calc(66.66% + 1px))}
+.crop-handle{position:absolute;width:36px;height:36px;pointer-events:auto;
+  touch-action:none;z-index:3}
+.crop-handle::after{content:"";position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);width:14px;height:14px;background:#fff;
+  border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4);border:2px solid rgba(0,0,0,.15)}
+.crop-handle[data-h="tl"]{left:-18px;top:-18px;cursor:nwse-resize}
+.crop-handle[data-h="tr"]{right:-18px;top:-18px;cursor:nesw-resize}
+.crop-handle[data-h="bl"]{left:-18px;bottom:-18px;cursor:nesw-resize}
+.crop-handle[data-h="br"]{right:-18px;bottom:-18px;cursor:nwse-resize}
+.crop-info{position:absolute;left:50%;top:-32px;transform:translateX(-50%);
+  background:rgba(0,0,0,.75);color:#fff;font-size:11px;padding:4px 8px;
+  border-radius:4px;white-space:nowrap;pointer-events:none;
+  font-variant-numeric:tabular-nums}
+
+.toolbar{display:flex;gap:2px;padding:4px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius);
+  overflow-x:auto;margin-top:10px;scrollbar-width:none}
+.toolbar::-webkit-scrollbar{display:none}
+.tool{flex:1;min-width:64px;padding:9px 8px;background:transparent;border:0;
+  border-radius:var(--radius-sm);color:var(--muted);cursor:pointer;
+  font-family:inherit;font-size:11.5px;font-weight:500;display:flex;
+  flex-direction:column;align-items:center;gap:4px;transition:background .15s,color .15s;
+  -webkit-tap-highlight-color:transparent}
+.tool:hover{background:var(--surface-2);color:var(--text)}
+.tool.active{background:var(--btn);color:var(--btn-text)}
+.tool svg{width:18px;height:18px;stroke-width:1.75;flex-shrink:0}
+
+.tool-panel{display:none;margin-top:10px}
+.tool-panel.active{display:block}
+.control{margin-bottom:12px}
+.control:last-child{margin-bottom:0}
+.control-label{display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.control-label .value{color:var(--text);font-variant-numeric:tabular-nums;font-weight:600}
+
+input[type=range]{width:100%;height:4px;appearance:none;-webkit-appearance:none;
+  background:var(--border-strong);border-radius:2px;outline:none;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;
+  border-radius:50%;background:var(--surface);border:2px solid var(--btn);cursor:pointer;
+  box-shadow:0 1px 3px rgba(0,0,0,.2)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;
+  background:var(--surface);border:2px solid var(--btn);cursor:pointer}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:7px 12px;font-size:12px;font-weight:500;font-family:inherit;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:999px;
+  color:var(--text);cursor:pointer;transition:background .15s,border-color .15s;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.chip:hover{background:var(--surface);border-color:var(--border-strong)}
+.chip.active{background:var(--btn);color:var(--btn-text);border-color:var(--btn)}
+
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;
+  border:2px solid var(--border);transition:transform .1s;
+  -webkit-tap-highlight-color:transparent}
+.swatch:hover{transform:scale(1.08)}
+.swatch.active{border-color:var(--accent);
+  box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--accent)}
+
+.actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);margin-bottom:10px}
+.actions .spacer{flex:1}
+.actions .btn{padding:8px 12px;font-size:12.5px}
+
+.row-btns{display:flex;gap:6px;flex-wrap:wrap}
+.row-btns .btn{flex:1;min-width:0}
+
+#editorWrap.fullscreen{position:fixed;inset:0;z-index:9999;background:var(--bg);
+  padding:16px;overflow-y:auto;display:block}
+#editorWrap.fullscreen #canvas{max-height:70vh}
+
+.progress{height:3px;background:var(--border);border-radius:2px;overflow:hidden;
+  margin-top:10px;display:none}
+.progress.active{display:block}
+.progress-bar{height:100%;background:var(--btn);width:0%;transition:width .3s}
+
+.status{font-size:12px;color:var(--muted);padding:8px 0;text-align:center;min-height:20px}
+.status.error{color:var(--danger)}
+
+@media print{
+  body *{visibility:hidden}
+  body{background:#fff;padding:0}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{position:absolute;left:0;top:0;width:100%;height:100%;
+    display:flex;align-items:center;justify-content:center}
+  #printArea canvas{max-width:100%;max-height:100%;box-shadow:none}
+}
+
+@media(max-width:600px){
+  body{padding:12px}
+  .tool{min-width:56px;font-size:10.5px;padding:8px 4px}
+  .tool svg{width:16px;height:16px}
+  .actions .btn{padding:8px 10px;font-size:12px}
+  .actions .btn span{display:none}
+  #undoBtn span,#redoBtn span{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="brand">
+      <div class="brand-mark">PS</div>
+      <div>
+        <div class="brand-name">Photo Studio</div>
+        <div class="brand-sub">Редактор и печать</div>
+      </div>
+    </div>
+    <button class="icon-btn" id="themeBtn" title="Сменить тему"></button>
+  </header>
+
+  <div class="panel" id="sourcePanel">
+    <div class="tabs">
+      <button class="tab active" data-tab="gen">Создать</button>
+      <button class="tab" data-tab="up">Загрузить</button>
+    </div>
+    <div class="tab-content active" id="tab-gen">
+      <div class="field row">
+        <input type="text" id="prompt" placeholder="Описание на английском: mountain lake, sunset">
+        <button class="btn" id="genBtn">Создать</button>
+      </div>
+      <div class="status" id="genStatus">Генерация занимает 1–3 минуты</div>
+      <div class="progress" id="genProgress"><div class="progress-bar" id="genBar"></div></div>
+    </div>
+    <div class="tab-content" id="tab-up">
+      <input type="file" id="fileInput" accept="image/*">
+    </div>
+  </div>
+
+  <div id="editorWrap" style="display:none">
+
+    <div class="actions">
+      <button class="btn secondary" id="undoBtn" disabled title="Назад">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+        <span>Назад</span>
+      </button>
+      <button class="btn secondary" id="redoBtn" disabled title="Вперёд">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+        <span>Вперёд</span>
+      </button>
+      <button class="btn secondary" id="resetBtn">Сброс</button>
+      <div class="spacer"></div>
+      <button class="btn secondary" id="fullscreenBtn" title="Во весь экран">
+        <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+      <button class="btn secondary" id="downloadBtn">Скачать</button>
+      <button class="btn" id="printBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Печать
+      </button>
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <div class="canvas-holder" id="canvasHolder">
+        <canvas id="canvas"></canvas>
+        <div class="crop-overlay" id="cropOverlay">
+          <div class="crop-rect" id="cropRect">
+            <div class="grid"></div>
+            <div class="crop-info" id="cropInfo"></div>
+            <div class="crop-handle" data-h="tl"></div>
+            <div class="crop-handle" data-h="tr"></div>
+            <div class="crop-handle" data-h="bl"></div>
+            <div class="crop-handle" data-h="br"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar" id="toolbar">
+      <button class="tool" data-tool="adjust">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        Настройки
+      </button>
+      <button class="tool" data-tool="crop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+        Обрезка
+      </button>
+      <button class="tool" data-tool="draw">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+        Кисть
+      </button>
+      <button class="tool" data-tool="text">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        Текст
+      </button>
+      <button class="tool" data-tool="filters">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+        Фильтры
+      </button>
+    </div>
+
+    <div class="panel" id="toolPanel" style="display:none;margin-top:10px">
+
+      <!-- ADJUST -->
+      <div class="tool-panel" id="panel-adjust">
+        <div class="panel-title">Настройки</div>
+        <div class="control">
+          <div class="control-label">Яркость <span class="value" id="vBright">0</span></div>
+          <input type="range" id="sBright" min="-100" max="100" value="0">
+        </div>
+        <div class="control">
+          <div class="control-label">Контраст <span class="value" id="vContrast">0</span></div>
+          <input type="range" id="sContrast" min="-100" max="100" value="0">
+        </div>
+        <div class="control">
+          <div class="control-label">Насыщенность <span class="value" id="vSat">0</span></div>
+          <input type="range" id="sSat" min="-100" max="100" value="0">
+        </div>
+        <div class="control">
+          <div class="control-label">Оттенок <span class="value" id="vHue">0</span></div>
+          <input type="range" id="sHue" min="-180" max="180" value="0">
+        </div>
+        <div class="control">
+          <div class="control-label">Размытие <span class="value" id="vBlur">0</span></div>
+          <input type="range" id="sBlur" min="0" max="20" value="0" step="0.5">
+        </div>
+        <div class="control">
+          <div class="control-label">Ч/Б <span class="value" id="vGray">0</span></div>
+          <input type="range" id="sGray" min="0" max="100" value="0">
+        </div>
+        <div class="control">
+          <div class="control-label">Сепия <span class="value" id="vSepia">0</span></div>
+          <input type="range" id="sSepia" min="0" max="100" value="0">
+        </div>
+      </div>
+
+      <!-- CROP -->
+      <div class="tool-panel" id="panel-crop">
+        <div class="panel-title">Обрезка</div>
+
+        <div class="control">
+          <div class="control-label">Поворот <span class="value" id="vFine">0°</span></div>
+          <input type="range" id="sFine" min="-45" max="45" value="0" step="0.5">
+        </div>
+
+        <div class="row-btns" style="margin-bottom:12px">
+          <button class="btn secondary small" id="rotL">↺ 90°</button>
+          <button class="btn secondary small" id="rotR">↻ 90°</button>
+          <button class="btn secondary small" id="flipH">⇄ Отразить</button>
+          <button class="btn secondary small" id="flipV">⇅ Перевернуть</button>
+        </div>
+
+        <div class="control">
+          <div class="control-label">Соотношение</div>
+          <div class="chips" id="ratioChips">
+            <button class="chip active" data-ratio="free">Свободно</button>
+            <button class="chip" data-ratio="1:1">1:1</button>
+            <button class="chip" data-ratio="4:3">4:3</button>
+            <button class="chip" data-ratio="3:4">3:4</button>
+            <button class="chip" data-ratio="16:9">16:9</button>
+            <button class="chip" data-ratio="9:16">9:16</button>
+            <button class="chip" data-ratio="orig">Исходное</button>
+          </div>
+        </div>
+
+        <div class="row-btns">
+          <button class="btn secondary small" id="cropReset">Сбросить рамку</button>
+          <button class="btn secondary small" id="cropCancel">Отмена</button>
+          <button class="btn small" id="cropApply">Применить</button>
+        </div>
+      </div>
+
+      <!-- DRAW -->
+      <div class="tool-panel" id="panel-draw">
+        <div class="panel-title">Кисть</div>
+        <div class="control">
+          <div class="control-label">Цвет</div>
+          <div class="swatches" id="drawColors"></div>
+        </div>
+        <div class="control">
+          <div class="control-label">Толщина <span class="value" id="brushVal">8</span></div>
+          <input type="range" id="brushSize" min="1" max="80" value="8">
+        </div>
+        <div class="row-btns">
+          <button class="btn secondary small" id="drawEraser">Ластик</button>
+          <button class="btn secondary small" id="drawClear">Очистить всё</button>
+        </div>
+      </div>
+
+      <!-- TEXT -->
+      <div class="tool-panel" id="panel-text">
+        <div class="panel-title">Текст</div>
+        <div class="control">
+          <textarea id="textInput" rows="2" placeholder="Введите текст"></textarea>
+        </div>
+        <div class="control">
+          <div class="control-label">Цвет</div>
+          <div class="swatches" id="textColors"></div>
+        </div>
+        <div class="control">
+          <div class="control-label">Размер <span class="value" id="textSizeVal">48</span></div>
+          <input type="range" id="textSize" min="12" max="200" value="48">
+        </div>
+        <div class="row-btns">
+          <button class="btn secondary small" id="textBold" style="flex:0 0 50px">Ж</button>
+          <button class="btn small" id="textAdd" style="flex:1">Добавить в центр</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:10px">
+          Или тапните по фото, чтобы поставить текст.
+        </div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="tool-panel" id="panel-filters">
+        <div class="panel-title">Фильтры</div>
+        <div class="chips" id="filterChips">
+          <button class="chip active" data-f="none">Оригинал</button>
+          <button class="chip" data-f="vivid">Насыщенный</button>
+          <button class="chip" data-f="mono">Ч/Б</button>
+          <button class="chip" data-f="sepia">Сепия</button>
+          <button class="chip" data-f="warm">Тёплый</button>
+          <button class="chip" data-f="cool">Холодный</button>
+          <button class="chip" data-f="fade">Выцветший</button>
+          <button class="chip" data-f="contrast">Контрастный</button>
+          <button class="chip" data-f="drama">Драма</button>
+          <button class="chip" data-f="vintage">Винтаж</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="printArea" style="display:none"></div>
+
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const canvas = $('canvas');
+const ctx = canvas.getContext('2d');
+const cropOverlay = $('cropOverlay');
+const cropRect = $('cropRect');
+const cropInfo = $('cropInfo');
+const editorWrap = $('editorWrap');
+const toolPanel = $('toolPanel');
+const sourcePanel = $('sourcePanel');
+
+/* ===== THEME ===== */
+const themeBtn = $('themeBtn');
+const sunIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+const moonIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  themeBtn.innerHTML = t === 'dark' ? sunIcon : moonIcon;
+}
+setTheme(localStorage.getItem('theme') || 'light');
+themeBtn.addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  setTheme(cur === 'dark' ? 'light' : 'dark');
+});
+
+/* ===== STATE ===== */
+let sourceImg = null;
+let currentTool = null;
+
+const defaultState = () => ({
+  brightness: 0, contrast: 0, saturation: 0, hue: 0, blur: 0, gray: 0, sepia: 0,
+  rotation: 0, fineRotation: 0,
+  flipH: false, flipV: false,
+  crop: null,                 // {x,y,w,h} в координатах B (после fine-rotate)
+  drawings: [],               // точки в координатах B (после fine-rotate)
+  texts: []                   // {text,x,y,size,color,bold} в координатах B
+});
+let state = defaultState();
+
+let history = [];
+let historyIdx = -1;
+
+/* ===== HISTORY ===== */
+function snapshot(){
+  return JSON.parse(JSON.stringify({
+    brightness: state.brightness, contrast: state.contrast, saturation: state.saturation,
+    hue: state.hue, blur: state.blur, gray: state.gray, sepia: state.sepia,
+    rotation: state.rotation, fineRotation: state.fineRotation,
+    flipH: state.flipH, flipV: state.flipV,
+    crop: state.crop, drawings: state.drawings, texts: state.texts
+  }));
+}
+function pushHistory(){
+  history = history.slice(0, historyIdx + 1);
+  history.push(snapshot());
+  historyIdx = history.length - 1;
+  updateHistoryBtns();
+}
+function restoreHistory(idx){
+  if (idx < 0 || idx >= history.length) return;
+  historyIdx = idx;
+  Object.assign(state, JSON.parse(JSON.stringify(history[idx])));
+  syncSliders();
+  render();
+  updateHistoryBtns();
+}
+function updateHistoryBtns(){
+  $('undoBtn').disabled = historyIdx <= 0;
+  $('redoBtn').disabled = historyIdx >= history.length - 1;
+}
+$('undoBtn').addEventListener('click', () => restoreHistory(historyIdx - 1));
+$('redoBtn').addEventListener('click', () => restoreHistory(historyIdx + 1));
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){
+    e.preventDefault();
+    if (e.shiftKey) restoreHistory(historyIdx + 1);
+    else restoreHistory(historyIdx - 1);
+  }
+});
+
+/* ===== TABS ===== */
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    $('tab-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+/* ===== AI GENERATION ===== */
+$('genBtn').addEventListener('click', async () => {
+  const prompt = $('prompt').value.trim();
+  if (!prompt){ setGenStatus('Введите описание', true); return; }
+  const btn = $('genBtn');
+  btn.disabled = true; btn.textContent = 'Создание...';
+  $('genProgress').classList.add('active');
+  $('genBar').style.width = '5%';
+  setGenStatus('Отправка задачи...');
+  try {
+    const r = await fetch('https://stablehorde.net/api/v2/generate/async', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','apikey':'0000000000'},
+      body: JSON.stringify({
+        prompt,
+        params: {width:512,height:512,steps:25,cfg_scale:7.5,sampler_name:'k_euler_a',n:1},
+        nsfw:false, censor_nsfw:true, models:['stable_diffusion']
+      })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const { id } = await r.json();
+    if (!id) throw new Error('Нет ID задачи');
+    let imageUrl = null, attempts = 0;
+    while (!imageUrl && attempts < 100){
+      await new Promise(res => setTimeout(res, 3000));
+      attempts++;
+      const s = await (await fetch('https://stablehorde.net/api/v2/generate/status/' + id)).json();
+      if (s.wait_time) setGenStatus(`В очереди: ~${s.wait_time} сек`);
+      else if (s.processing) setGenStatus('Генерация...');
+      $('genBar').style.width = Math.min(95, 5 + attempts * 2) + '%';
+      if (s.done && s.generations && s.generations[0]) imageUrl = s.generations[0].img;
+      if (s.faulted) throw new Error('Ошибка сервера');
+    }
+    if (!imageUrl) throw new Error('Таймаут');
+    $('genBar').style.width = '100%';
+    setGenStatus('Загрузка...');
+    const blob = await (await fetch(imageUrl)).blob();
+    await loadImageFromBlob(blob);
+    setGenStatus('Готово');
+  } catch (e){
+    setGenStatus('Ошибка: ' + e.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Создать';
+    setTimeout(() => $('genProgress').classList.remove('active'), 800);
+  }
+});
+function setGenStatus(t, err){
+  const el = $('genStatus'); el.textContent = t;
+  el.classList.toggle('error', !!err);
+}
+
+/* ===== FILE ===== */
+$('fileInput').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  await loadImageFromBlob(f);
+});
+
+async function loadImageFromBlob(blob){
+  const bmp = await createImageBitmap(blob);
+  const MAX = 2000;
+  let w = bmp.width, h = bmp.height;
+  if (w > MAX || h > MAX){
+    const s = Math.min(MAX / w, MAX / h);
+    w = Math.round(w * s); h = Math.round(h * s);
+  }
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(bmp, 0, 0, w, h);
+  sourceImg = c;
+
+  state = defaultState();
+  history = []; historyIdx = -1;
+
+  sourcePanel.style.display = 'none';
+  editorWrap.style.display = 'block';
+  toolPanel.style.display = 'none';
+  currentTool = null;
+  document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+  cancelCrop(true);
+
+  syncSliders();
+  render();
+  pushHistory();
+}
+
+/* ===== GEOMETRY ===== */
+// Размер повёрнутого по 90/180/270 картинки
+function getRotatedSize(){
+  const isRot = state.rotation % 180 !== 0;
+  return isRot
+    ? {w: sourceImg.height, h: sourceImg.width}
+    : {w: sourceImg.width, h: sourceImg.height};
+}
+
+// Создаёт canvas с повёрнутым по 90° и отражённым sourceImg
+function makeRotatedCanvas(){
+  const size = getRotatedSize();
+  const c = document.createElement('canvas');
+  c.width = size.w; c.height = size.h;
+  const cx = c.getContext('2d');
+  cx.save();
+  cx.fillStyle = '#fff';
+  cx.fillRect(0, 0, size.w, size.h);
+  cx.translate(size.w / 2, size.h / 2);
+  cx.rotate(state.rotation * Math.PI / 180);
+  cx.scale(state.flipH ? -1 : 1, state.flipV ? -1 : 1);
+  cx.drawImage(sourceImg, -sourceImg.width / 2, -sourceImg.height / 2);
+  cx.restore();
+  return c;
+}
+
+// Создаёт canvas B: повёрнутое + fineRotation (вписан в прямоугольник)
+function makeCanvasB(){
+  const rot = makeRotatedCanvas();
+  const size = getRotatedSize();
+
+  if (!state.fineRotation){
+    return { canvas: rot, w: size.w, h: size.h };
+  }
+
+  const a = Math.abs(state.fineRotation) * Math.PI / 180;
+  const bW = Math.ceil(size.w * Math.cos(a) + size.h * Math.sin(a));
+  const bH = Math.ceil(size.w * Math.sin(a) + size.h * Math.cos(a));
+
+  const c = document.createElement('canvas');
+  c.width = bW; c.height = bH;
+  const cx = c.getContext('2d');
+  cx.fillStyle = '#fff';
+  cx.fillRect(0, 0, bW, bH);
+  cx.translate(bW / 2, bH / 2);
+  cx.rotate(state.fineRotation * Math.PI / 180);
+  cx.drawImage(rot, -size.w / 2, -size.h / 2);
+  return { canvas: c, w: bW, h: bH };
+}
+
+// Точка в B → точка в исходном sourceImg (обратное преобразование)
+function pointBtoSource(bx, by){
+  const size = getRotatedSize();
+  // обратный fine rotate
+  let x = bx, y = by;
+  if (state.fineRotation){
+    const a = -state.fineRotation * Math.PI / 180;
+    const cos = Math.cos(a), sin = Math.sin(a);
+    // центр B (в тех же координатах что и получаем) — передаём уже относительно центра B
+    // см. ниже обёртку
+  }
+  return {x, y};
+}
+
+// Полное преобразование B → source
+function BtoSource(bx, by, bW, bH){
+  // 1) обратная fine-rotation вокруг центра B
+  let x = bx - bW / 2;
+  let y = by - bH / 2;
+  if (state.fineRotation){
+    const a = -state.fineRotation * Math.PI / 180;
+    const cos = Math.cos(a), sin = Math.sin(a);
+    const nx = cos * x - sin * y;
+    const ny = sin * x + cos * y;
+    x = nx; y = ny;
+  }
+  // теперь (x,y) — координаты в повёрнутом на 90 canvas, но относительно центра
+  const size = getRotatedSize();
+  let rx = x + size.w / 2;
+  let ry = y + size.h / 2;
+  // 2) обратный 90-поворот
+  const a2 = -state.rotation * Math.PI / 180;
+  const cos2 = Math.cos(a2), sin2 = Math.sin(a2);
+  let px = rx - size.w / 2;
+  let py = ry - size.h / 2;
+  let xr = cos2 * px - sin2 * py;
+  let yr = sin2 * px + cos2 * py;
+  // 3) обратное отражение
+  if (state.flipH) xr = -xr;
+  if (state.flipV) yr = -yr;
+  // 4) перенос к центру исходного
+  return { x: xr + sourceImg.width / 2, y: yr + sourceImg.height / 2 };
+}
+
+// Source → B
+function sourceToB(sx, sy, bW, bH){
+  const size = getRotatedSize();
+  // 1) относительно центра source
+  let x = sx - sourceImg.width / 2;
+  let y = sy - sourceImg.height / 2;
+  // 2) отражение
+  if (state.flipH) x = -x;
+  if (state.flipV) y = -y;
+  // 3) 90-поворот
+  const a = state.rotation * Math.PI / 180;
+  const cos = Math.cos(a), sin = Math.sin(a);
+  let rx = cos * x - sin * y + size.w / 2;
+  let ry = sin * x + cos * y + size.h / 2;
+  // 4) fine-rotation вокруг центра B
+  let bx = rx - bW / 2;
+  let by = ry - bH / 2;
+  if (state.fineRotation){
+    const a2 = state.fineRotation * Math.PI / 180;
+    const c2 = Math.cos(a2), s2 = Math.sin(a2);
+    const nx = c2 * bx - s2 * by;
+    const ny = s2 * bx + c2 * by;
+    bx = nx; by = ny;
+  }
+  return { x: bx + bW / 2, y: by + bH / 2 };
+}
+
+/* ===== RENDER ===== */
+function buildFilter(){
+  const f = [];
+  f.push(`brightness(${100 + state.brightness}%)`);
+  f.push(`contrast(${100 + state.contrast}%)`);
+  f.push(`saturate(${100 + state.saturation}%)`);
+  if (state.hue) f.push(`hue-rotate(${state.hue}deg)`);
+  if (state.blur) f.push(`blur(${state.blur}px)`);
+  if (state.gray) f.push(`grayscale(${state.gray}%)`);
+  if (state.sepia) f.push(`sepia(${state.sepia}%)`);
+  return f.join(' ');
+}
+
+function render(){
+  if (!sourceImg) return;
+  const B = makeCanvasB();
+  const bW = B.w, bH = B.h;
+
+  const crop = state.crop || {x:0, y:0, w:bW, h:bH};
+  const cx = Math.max(0, Math.min(bW - 1, crop.x));
+  const cy = Math.max(0, Math.min(bH - 1, crop.y));
+  const cw = Math.max(1, Math.min(bW - cx, crop.w));
+  const ch = Math.max(1, Math.min(bH - cy, crop.h));
+
+  const outW = Math.round(cw);
+  const outH = Math.round(ch);
+  canvas.width = outW;
+  canvas.height = outH;
+
+  ctx.clearRect(0, 0, outW, outH);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, outW, outH);
+  ctx.filter = buildFilter();
+  ctx.drawImage(B.canvas, cx, cy, cw, ch, 0, 0, outW, outH);
+  ctx.filter = 'none';
+
+  // Аннотации: B → output (сдвиг -cx,-cy)
+  const toOut = (bx, by) => ({ x: bx - cx, y: by - cy });
+
+  for (const d of state.drawings){
+    ctx.strokeStyle = d.color;
+    ctx.fillStyle = d.color;
+    ctx.lineWidth = d.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (d.points.length === 1){
+      const p = toOut(d.points[0].x, d.points[0].y);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, d.size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      const p0 = toOut(d.points[0].x, d.points[0].y);
+      ctx.moveTo(p0.x, p0.y);
+      for (let i = 1; i < d.points.length; i++){
+        const p = toOut(d.points[i].x, d.points[i].y);
+        ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  for (const t of state.texts){
+    ctx.font = `${t.bold ? 'bold ' : ''}${t.size}px -apple-system, sans-serif`;
+    ctx.fillStyle = t.color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const p = toOut(t.x, t.y);
+    ctx.fillText(t.text, p.x, p.y);
+  }
+}
+
+/* ===== TOOLS ===== */
+document.querySelectorAll('.tool').forEach(b => {
+  b.addEventListener('click', () => selectTool(b.dataset.tool));
+});
+
+function selectTool(name){
+  if (cropMode && name !== 'crop') cancelCrop();
+  if (currentTool === name) name = null;
+  currentTool = name;
+  document.querySelectorAll('.tool').forEach(t =>
+    t.classList.toggle('active', t.dataset.tool === name));
+  document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
+  if (name){
+    toolPanel.style.display = 'block';
+    $('panel-' + name).classList.add('active');
+    if (name === 'crop') startCrop();
+  } else {
+    toolPanel.style.display = 'none';
+  }
+  updateCursor();
+}
+function updateCursor(){
+  if (cropMode) canvas.style.cursor = 'crosshair';
+  else if (currentTool === 'draw') canvas.style.cursor = 'crosshair';
+  else if (currentTool === 'text') canvas.style.cursor = 'text';
+  else canvas.style.cursor = 'default';
+}
+
+/* ===== CROP ===== */
+let cropMode = false;
+let cropSavedState = null;
+let cropSel = null;       // {x,y,w,h} в CSS-пикселях относительно canvas
+let cropRatio = 'free';
+
+function startCrop(){
+  if (!sourceImg) return;
+  cropSavedState = { crop: state.crop, fineRotation: state.fineRotation, rotation: state.rotation, flipH: state.flipH, flipV: state.flipV };
+  // Показываем полное изображение — без обрезки
+  state.crop = null;
+  cropMode = true;
+  cropOverlay.classList.add('active');
+  render();
+  requestAnimationFrame(() => {
+    const dw = canvas.clientWidth, dh = canvas.clientHeight;
+    const p = 0.1;
+    cropSel = { x: dw*p, y: dh*p, w: dw*(1-2*p), h: dh*(1-2*p) };
+    updateCropUI();
+  });
+  updateCursor();
+}
+
+function cancelCrop(silent){
+  if (!cropMode && silent !== true) return;
+  if (cropSavedState){
+    state.crop = cropSavedState.crop;
+    state.fineRotation = cropSavedState.fineRotation;
+    state.rotation = cropSavedState.rotation;
+    state.flipH = cropSavedState.flipH;
+    state.flipV = cropSavedState.flipV;
+    cropSavedState = null;
+  }
+  cropMode = false;
+  cropSel = null;
+  cropOverlay.classList.remove('active');
+  if (!silent){
+    syncSliders();
+    render();
+    updateCursor();
+  }
+}
+
+function applyCrop(){
+  if (!cropMode || !cropSel || cropSel.w < 20 || cropSel.h < 20){
+    cancelCrop(); selectTool(null); return;
+  }
+  // cropSel в CSS-пикселях относительно отображаемого canvas.
+  // Но canvas в режиме crop показывает ПОЛНОЕ B, т.е. bW×bH.
+  // Значит можно просто масштабировать в координаты B.
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  const bx = cropSel.x * sx;
+  const by = cropSel.y * sy;
+  const bw = cropSel.w * sx;
+  const bh = cropSel.h * sy;
+
+  state.crop = { x: bx, y: by, w: bw, h: bh };
+  cropSavedState = null;
+  cropMode = false;
+  cropSel = null;
+  cropOverlay.classList.remove('active');
+  pushHistory();
+  render();
+  selectTool(null);
+}
+
+function updateCropUI(){
+  if (!cropSel) return;
+  cropRect.style.left = cropSel.x + 'px';
+  cropRect.style.top = cropSel.y + 'px';
+  cropRect.style.width = cropSel.w + 'px';
+  cropRect.style.height = cropSel.h + 'px';
+  const pct = Math.round((cropSel.w * cropSel.h) / (canvas.clientWidth * canvas.clientHeight) * 100);
+  cropInfo.textContent = pct + '%';
+}
+
+$('cropApply').addEventListener('click', applyCrop);
+$('cropCancel').addEventListener('click', () => { cancelCrop(); selectTool(null); });
+$('cropReset').addEventListener('click', () => {
+  const dw = canvas.clientWidth, dh = canvas.clientHeight;
+  const p = 0.1;
+  cropSel = { x: dw*p, y: dh*p, w: dw*(1-2*p), h: dh*(1-2*p) };
+  cropRatio = 'free';
+  document.querySelectorAll('#ratioChips .chip').forEach(x =>
+    x.classList.toggle('active', x.dataset.ratio === 'free'));
+  updateCropUI();
+});
+
+/* ===== CROP POINTER EVENTS (единая система) ===== */
+let cropDrag = null;
+
+function getCanvasRel(e){
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: Math.max(0, Math.min(rect.width, e.clientX - rect.left)),
+    y: Math.max(0, Math.min(rect.height, e.clientY - rect.top)),
+    rect
+  };
+}
+
+function getRatio(){
+  if (cropRatio === 'free') return null;
+  if (cropRatio === 'orig' && sourceImg){
+    // Пропорции текущего B
+    const B = makeCanvasB();
+    return B.w / B.h;
+  }
+  const p = cropRatio.split(':');
+  return parseInt(p[0]) / parseInt(p[1]);
+}
+
+canvas.addEventListener('pointerdown', e => {
+  if (!cropMode) return;
+  if (e.target !== canvas) return;
+  const {x, y, rect} = getCanvasRel(e);
+  // Новая рамка
+  cropDrag = { mode: 'new', startX: x, startY: y, rect };
+  cropSel = { x, y, w: 0, h: 0 };
+  updateCropUI();
+  e.preventDefault();
+  canvas.setPointerCapture(e.pointerId);
+});
+
+cropRect.addEventListener('pointerdown', e => {
+  if (!cropMode) return;
+  if (e.target.classList.contains('crop-handle')) return;
+  const {x, y, rect} = getCanvasRel(e);
+  cropDrag = { mode: 'move', startX: x, startY: y, initX: cropSel.x, initY: cropSel.y, rect };
+  e.preventDefault();
+  e.stopPropagation();
+  cropRect.setPointerCapture(e.pointerId);
+});
+
+document.querySelectorAll('.crop-handle').forEach(h => {
+  h.addEventListener('pointerdown', e => {
+    if (!cropMode) return;
+    const {x, y, rect} = getCanvasRel(e);
+    cropDrag = {
+      mode: h.dataset.h,
+      startX: x, startY: y,
+      initX: cropSel.x, initY: cropSel.y,
+      initW: cropSel.w, initH: cropSel.h,
+      rect
+    };
+    e.preventDefault();
+    e.stopPropagation();
+    h.setPointerCapture(e.pointerId);
+  });
+});
+
+document.addEventListener('pointermove', e => {
+  if (!cropDrag) return;
+  const {x, y, rect} = getCanvasRel(e);
+  const dw = rect.width, dh = rect.height;
+
+  if (cropDrag.mode === 'new'){
+    let x1 = Math.min(cropDrag.startX, x);
+    let y1 = Math.min(cropDrag.startY, y);
+    let x2 = Math.max(cropDrag.startX, x);
+    let y2 = Math.max(cropDrag.startY, y);
+    let w = x2 - x1, h = y2 - y1;
+    const r = getRatio();
+    if (r){
+      if (w / h > r) w = h * r;
+      else h = w / r;
+      if (x === cropDrag.startX){ /* keep */ }
+      if (cropDrag.startX > cropDrag.startX) {}
+      // выравниваем от начальной точки
+      if (x < cropDrag.startX) x1 = cropDrag.startX - w;
+      if (y < cropDrag.startY) y1 = cropDrag.startY - h;
+    }
+    cropSel = {
+      x: Math.max(0, x1),
+      y: Math.max(0, y1),
+      w: Math.min(w, dw - Math.max(0, x1)),
+      h: Math.min(h, dh - Math.max(0, y1))
+    };
+  } else if (cropDrag.mode === 'move'){
+    const dx = x - cropDrag.startX;
+    const dy = y - cropDrag.startY;
+    let nx = cropDrag.initX + dx;
+    let ny = cropDrag.initY + dy;
+    nx = Math.max(0, Math.min(dw - cropSel.w, nx));
+    ny = Math.max(0, Math.min(dh - cropSel.h, ny));
+    cropSel.x = nx;
+    cropSel.y = ny;
+  } else {
+    const dx = x - cropDrag.startX;
+    const dy = y - cropDrag.startY;
+    let nx = cropDrag.initX, ny = cropDrag.initY;
+    let nw = cropDrag.initW, nh = cropDrag.initH;
+    if (cropDrag.mode.indexOf('l') >= 0){ nx = cropDrag.initX + dx; nw = cropDrag.initW - dx; }
+    if (cropDrag.mode.indexOf('r') >= 0){ nw = cropDrag.initW + dx; }
+    if (cropDrag.mode.indexOf('t') >= 0){ ny = cropDrag.initY + dy; nh = cropDrag.initH - dy; }
+    if (cropDrag.mode.indexOf('b') >= 0){ nh = cropDrag.initH + dy; }
+
+    const r = getRatio();
+    if (r){
+      const isCorner = cropDrag.mode.length === 2;
+      if (isCorner){
+        // Сначала определяем доминирующее направление
+        nh = nw / r;
+        if (cropDrag.mode.indexOf('t') >= 0) ny = cropDrag.initY + cropDrag.initH - nh;
+        if (cropDrag.mode.indexOf('l') >= 0) nx = cropDrag.initX + cropDrag.initW - nw;
+      }
+    }
+    if (nw < 40){ nw = 40; if (cropDrag.mode.indexOf('l') >= 0) nx = cropDrag.initX + cropDrag.initW - nw; }
+    if (nh < 40){ nh = 40; if (cropDrag.mode.indexOf('t') >= 0) ny = cropDrag.initY + cropDrag.initH - nh; }
+    if (nx < 0){ nw += nx; nx = 0; }
+    if (ny < 0){ nh += ny; ny = 0; }
+    if (nx + nw > dw) nw = dw - nx;
+    if (ny + nh > dh) nh = dh - ny;
+    cropSel = { x: nx, y: ny, w: nw, h: nh };
+  }
+  updateCropUI();
+  e.preventDefault();
+});
+
+document.addEventListener('pointerup', () => { cropDrag = null; });
+document.addEventListener('pointercancel', () => { cropDrag = null; });
+
+/* Ratio chips */
+document.querySelectorAll('#ratioChips .chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#ratioChips .chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    cropRatio = c.dataset.ratio;
+    if (cropSel && cropRatio !== 'free'){
+      const r = getRatio();
+      if (!r) return;
+      const dw = canvas.clientWidth, dh = canvas.clientHeight;
+      let w = cropSel.w, h = w / r;
+      if (h > dh){ h = dh; w = h * r; }
+      cropSel.w = w; cropSel.h = h;
+      cropSel.x = Math.max(0, Math.min(dw - w, cropSel.x));
+      cropSel.y = Math.max(0, Math.min(dh - h, cropSel.y));
+      updateCropUI();
+    }
+  });
+});
+
+/* ===== FINE ROTATION + 90° ===== */
+$('sFine').addEventListener('input', e => {
+  const v = +e.target.value;
+  state.fineRotation = v;
+  $('vFine').textContent = (v > 0 ? '+' : '') + v + '°';
+  // При изменении fineRotation нужно сбросить crop, если он был
+  if (state.crop){
+    // сброс обрезки при повороте — иначе сместится
+    state.crop = null;
+  }
+  if (cropMode && cropSel){
+    // перерисовываем и оставляем рамку как есть (она в CSS-пикселях)
+    render();
+    updateCropUI();
+    return;
+  }
+  render();
+});
+$('sFine').addEventListener('change', () => pushHistory());
+
+$('rotL').addEventListener('click', () => {
+  state.rotation = (state.rotation - 90 + 360) % 360;
+  state.crop = null;
+  state.fineRotation = 0;
+  $('sFine').value = 0;
+  $('vFine').textContent = '0°';
+  if (cropMode) render();
+  pushHistory(); render();
+});
+$('rotR').addEventListener('click', () => {
+  state.rotation = (state.rotation + 90) % 360;
+  state.crop = null;
+  state.fineRotation = 0;
+  $('sFine').value = 0;
+  $('vFine').textContent = '0°';
+  if (cropMode) render();
+  pushHistory(); render();
+});
+$('flipH').addEventListener('click', () => {
+  state.flipH = !state.flipH;
+  state.crop = null;
+  pushHistory(); render();
+});
+$('flipV').addEventListener('click', () => {
+  state.flipV = !state.flipV;
+  state.crop = null;
+  pushHistory(); render();
+});
+
+/* ===== DRAW ===== */
+const COLORS = ['#ffffff','#000000','#ff3b30','#ff9500','#ffcc00','#34c759','#007aff','#5856d6','#af52de','#ff2d55'];
+let brushColor = '#ff3b30', brushSize = 8, eraserMode = false;
+let textColor = '#ffffff', textSize = 48, textBold = false;
+
+const drawColorsEl = $('drawColors');
+const textColorsEl = $('textColors');
+COLORS.forEach(c => {
+  const s = document.createElement('div');
+  s.className = 'swatch'; s.style.background = c;
+  if (c === brushColor) s.classList.add('active');
+  s.addEventListener('click', () => {
+    drawColorsEl.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    brushColor = c; eraserMode = false;
+    $('drawEraser').style.background = '';
+    $('drawEraser').style.color = '';
+  });
+  drawColorsEl.appendChild(s);
+
+  const s2 = document.createElement('div');
+  s2.className = 'swatch'; s2.style.background = c;
+  if (c === textColor) s2.classList.add('active');
+  s2.addEventListener('click', () => {
+    textColorsEl.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+    s2.classList.add('active');
+    textColor = c;
+  });
+  textColorsEl.appendChild(s2);
+});
+
+$('brushSize').addEventListener('input', e => {
+  brushSize = +e.target.value;
+  $('brushVal').textContent = brushSize;
+});
+$('drawClear').addEventListener('click', () => {
+  state.drawings = []; pushHistory(); render();
+});
+$('drawEraser').addEventListener('click', () => {
+  eraserMode = !eraserMode;
+  $('drawEraser').style.background = eraserMode ? 'var(--btn)' : '';
+  $('drawEraser').style.color = eraserMode ? 'var(--btn-text)' : '';
+});
+
+/* ===== TEXT PANEL ===== */
+$('textSize').addEventListener('input', e => {
+  textSize = +e.target.value;
+  $('textSizeVal').textContent = textSize;
+});
+$('textBold').addEventListener('click', () => {
+  textBold = !textBold;
+  $('textBold').style.background = textBold ? 'var(--btn)' : '';
+  $('textBold').style.color = textBold ? 'var(--btn-text)' : '';
+});
+$('textAdd').addEventListener('click', () => {
+  const text = $('textInput').value.trim();
+  if (!text) return;
+  // Центр текущего видимого canvas → в координаты B
+  const B = makeCanvasB();
+  const crop = state.crop || {x:0, y:0, w:B.w, h:B.h};
+  const bCenterX = crop.x + crop.w / 2;
+  const bCenterY = crop.y + crop.h / 2;
+  state.texts.push({
+    text, x: bCenterX, y: bCenterY,
+    size: textSize, color: textColor, bold: textBold
+  });
+  $('textInput').value = '';
+  pushHistory(); render();
+});
+
+/* ===== POINTER: draw & text drag ===== */
+let drawingStroke = null;
+let draggingText = null;
+
+function getCanvasCoords(e){
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) * (canvas.width / rect.width),
+    y: (e.clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+// canvas coord (в текущем visible canvas) → координаты B
+function visibleToB(vx, vy){
+  const B = makeCanvasB();
+  const crop = state.crop || {x:0, y:0, w:B.w, h:B.h};
+  const sx = B.w / canvas.width;
+  const sy = B.h / canvas.height;
+  return {
+    x: crop.x + vx * sx,
+    y: crop.y + vy * sy
+  };
+}
+// B → visible canvas
+function bToVisible(bx, by){
+  const B = makeCanvasB();
+  const crop = state.crop || {x:0, y:0, w:B.w, h:B.h};
+  const sx = canvas.width / B.w;
+  const sy = canvas.height / B.h;
+  return {
+    x: (bx - crop.x) * sx,
+    y: (by - crop.y) * sy
+  };
+}
+
+canvas.addEventListener('pointerdown', e => {
+  if (cropMode) return;
+  if (!currentTool) return;
+  const p = getCanvasCoords(e);
+  const bp = visibleToB(p.x, p.y);
+
+  if (currentTool === 'draw'){
+    drawingStroke = {
+      color: eraserMode ? '#ffffff' : brushColor,
+      size: brushSize,
+      points: [bp]
+    };
+    state.drawings.push(drawingStroke);
+    canvas.setPointerCapture(e.pointerId);
+    render();
+  } else if (currentTool === 'text'){
+    // проверяем попадание в существующий текст
+    const B = makeCanvasB();
+    for (let i = state.texts.length - 1; i >= 0; i--){
+      const t = state.texts[i];
+      const tv = bToVisible(t.x, t.y);
+      const dx = tv.x - p.x;
+      const dy = tv.y - p.y;
+      const hit = Math.max(40, t.size * (canvas.width / B.w));
+      if (Math.hypot(dx, dy) < hit){
+        draggingText = { idx: i, offX: t.x - bp.x, offY: t.y - bp.y };
+        canvas.setPointerCapture(e.pointerId);
+        return;
+      }
+    }
+    // если не попали — добавляем новый текст в этом месте
+    const text = $('textInput').value.trim() || 'Текст';
+    state.texts.push({ text, x: bp.x, y: bp.y, size: textSize, color: textColor, bold: textBold });
+    pushHistory(); render();
+  }
+});
+
+canvas.addEventListener('pointermove', e => {
+  if (!drawingStroke && !draggingText) return;
+  const p = getCanvasCoords(e);
+  const bp = visibleToB(p.x, p.y);
+  if (drawingStroke){
+    drawingStroke.points.push(bp);
+    render();
+  } else if (draggingText){
+    state.texts[draggingText.idx].x = bp.x + draggingText.offX;
+    state.texts[draggingText.idx].y = bp.y + draggingText.offY;
+    render();
+  }
+});
+
+canvas.addEventListener('pointerup', () => {
+  if (drawingStroke){ pushHistory(); drawingStroke = null; }
+  if (draggingText){ pushHistory(); draggingText = null; }
+});
+canvas.addEventListener('pointercancel', () => {
+  drawingStroke = null; draggingText = null;
+});
+
+/* ===== ADJUST SLIDERS ===== */
+const sliderMap = {
+  sBright:['brightness','vBright'], sContrast:['contrast','vContrast'],
+  sSat:['saturation','vSat'], sHue:['hue','vHue'], sBlur:['blur','vBlur'],
+  sGray:['gray','vGray'], sSepia:['sepia','vSepia']
+};
+function fmt(v){ return v > 0 ? '+' + v : String(v); }
+Object.keys(sliderMap).forEach(id => {
+  const [key, labelId] = sliderMap[id];
+  const el = $(id);
+  el.addEventListener('input', e => {
+    state[key] = +e.target.value;
+    $(labelId).textContent = fmt(state[key]);
+    render();
+  });
+  el.addEventListener('change', pushHistory);
+});
+function syncSliders(){
+  Object.keys(sliderMap).forEach(id => {
+    const [key, labelId] = sliderMap[id];
+    $(id).value = state[key];
+    $(labelId).textContent = fmt(state[key]);
+  });
+  $('sFine').value = state.fineRotation;
+  $('vFine').textContent = (state.fineRotation > 0 ? '+' : '') + state.fineRotation + '°';
+}
+
+/* ===== FILTER PRESETS ===== */
+const presets = {
+  none:{brightness:0,contrast:0,saturation:0,hue:0,gray:0,sepia:0},
+  vivid:{brightness:5,contrast:15,saturation:35,hue:0,gray:0,sepia:0},
+  mono:{brightness:0,contrast:10,saturation:-100,hue:0,gray:0,sepia:0},
+  sepia:{brightness:0,contrast:5,saturation:-20,hue:0,gray:0,sepia:70},
+  warm:{brightness:5,contrast:5,saturation:10,hue:-15,gray:0,sepia:15},
+  cool:{brightness:0,contrast:5,saturation:10,hue:15,gray:0,sepia:0},
+  fade:{brightness:10,contrast:-20,saturation:-30,hue:0,gray:0,sepia:0},
+  contrast:{brightness:-5,contrast:40,saturation:5,hue:0,gray:0,sepia:0},
+  drama:{brightness:-10,contrast:50,saturation:20,hue:0,gray:15,sepia:0},
+  vintage:{brightness:5,contrast:-10,saturation:-20,hue:-10,gray:0,sepia:35}
+};
+document.querySelectorAll('#filterChips .chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#filterChips .chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    Object.assign(state, presets[c.dataset.f]);
+    syncSliders(); pushHistory(); render();
+  });
+});
+
+/* ===== RESET ===== */
+$('resetBtn').addEventListener('click', () => {
+  if (!sourceImg) return;
+  state = defaultState();
+  syncSliders();
+  pushHistory(); render();
+});
+
+/* ===== DOWNLOAD ===== */
+$('downloadBtn').addEventListener('click', () => {
+  if (!sourceImg) return;
+  canvas.toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'photo-' + Date.now() + '.png';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }, 'image/png');
+});
+
+/* ===== FULLSCREEN ===== */
+$('fullscreenBtn').addEventListener('click', () => {
+  const fs = editorWrap.classList.toggle('fullscreen');
+  const icon = $('fsIcon');
+  if (fs){
+    icon.innerHTML = '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>';
+    document.body.style.overflow = 'hidden';
+  } else {
+    icon.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>';
+    document.body.style.overflow = '';
+  }
+  setTimeout(() => { if (cropMode) updateCropUI(); }, 50);
+});
+
+/* ===== PRINT ===== */
+$('printBtn').addEventListener('click', () => {
+  if (!sourceImg) return;
+  const area = $('printArea');
+  area.innerHTML = '';
+  const clone = document.createElement('canvas');
+  clone.width = canvas.width;
+  clone.height = canvas.height;
+  clone.getContext('2d').drawImage(canvas, 0, 0);
+  area.appendChild(clone);
+  area.style.display = 'block';
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { area.style.display = 'none'; area.innerHTML = ''; }, 500);
+  }, 100);
+});
+
+/* ===== RESIZE ===== */
+window.addEventListener('resize', () => { if (cropMode) updateCropUI(); });
+
+})();
+</script>
+</body>
+</html>
